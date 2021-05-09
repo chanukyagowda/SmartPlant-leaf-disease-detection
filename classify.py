@@ -2,7 +2,7 @@
 """
 Created on Thu May  6 20:53:12 2021
 
-@author: ravi
+@author: chanukya N
 """
 
 import boto3
@@ -11,7 +11,7 @@ import botocore
 #BUCKET_NAME = 'my-bucket' # replace with your bucket name
 
 
-s3 = boto3.client('s3', aws_access_key_id='AKIAWPXZRZQSL4VHNFAI' , aws_secret_access_key='5ZbJvTEDasVKrbdGUQHxn+u79sDVmq5i9yNAMUB7')
+s3 = boto3.client('s3', aws_access_key_id='------------------' , aws_secret_access_key='-----------------------')
 print('connection established')
 s3.download_file('smartleaf','img01.JPG','img01.JPG')
 print('file downloaded as image file')
@@ -40,8 +40,8 @@ SUBJECT = 'SMART LEAF NOTIFICATION'
 #TEXT = 'Here is a message from python.'
 
 # Gmail Sign In
-gmail_sender = 'smartleaf07@gmail.com'
-gmail_passwd = 'Smartplant@07'
+gmail_sender = '--------'
+gmail_passwd = '--------'
 
 
 server = smtplib.SMTP("smtp.gmail.com", 587)
