@@ -1,0 +1,222 @@
+#include <WiFiUdp.h>
+#include <ESP8266WiFi.h>
+
+const char* ssid = "cstech"; //Enter your wifi network SSID
+const char* password = "---------"; //Enter your wifi network password
+
+const int m1 = 14;
+const int m2 = 12;
+const int m3 = 13;
+const int m4 = 15;
+
+const int SERVER_PORT = 1111;
+const int BAUD_RATE = 115200;
+
+byte incomingByte = 0;
+
+bool forwardsPressed = false;
+bool backwardsPressed = false;
+bool rightPressed = false;
+bool leftPressed = false;
+
+const int FORWARDS_PRESSED = 49;
+const int FORWARDS_RELEASED = 50;
+const int BACKWARDS_PRESSED = 55;
+const int BACKWARDS_RELEASED = 56;
+const int RIGHT_PRESSED = 53;
+const int RIGHT_RELEASED = 54;
+const int LEFT_PRESSED = 51;
+const int LEFT_RELEASED = 52;
+
+byte packetBuffer[512];
+
+WiFiUDP Udp;
+
+void initOutputs() {
+  pinMode(m1, OUTPUT);
+  pinMode(m2, OUTPUT);
+  pinMode(m3, OUTPUT);
+  pinMode(m4, OUTPUT);
+}
+
+void connectWifi() {
+  Serial.println();
+  Serial.println();
+  Serial.print("Connecting to WIFI network");
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println(WiFi.localIP());
+  Udp.begin(SERVER_PORT);
+}
+
+void moveForwards() {
+  digitalWrite(m1, HIGH);
+  digitalWrite(m2, LOW);
+  digitalWrite(m3,HIGH);
+  digitalWrite(m4,LOW);
+  delay(10);
+}
+
+void moveBackwards() {
+  digitalWrite(m1, LOW);
+  digitalWrite(m2, HIGH);
+  digitalWrite(m3,LOW);
+  digitalWrite(m4,HIGH);
+  delay(10);
+}
+
+void turnRight() {
+  //Serial.println("move right pressed");
+  //analogWrite(A0,1023);
+  digitalWrite(m1, HIGH);
+  digitalWrite(m2, LOW);
+  digitalWrite(m3,LOW);
+  digitalWrite(m4,HIGH);
+  delay(10);
+}
+
+void turnLeft() {
+  //analogWrite(A0,1023);
+  digitalWrite(m1, LOW);
+  digitalWrite(m2, HIGH);
+  digitalWrite(m3,HIGH);
+  digitalWrite(m4,LOW);
+  delay(10);
+}
+
+/*void resetSteering() {
+  //digitalWrite(m3, LOW);
+  //digitalWrite(m4, LOW);
+  digitalWrite(m1, LOW);
+  digitalWrite(m2, LOW);
+  digitalWrite(m3,LOW);
+  digitalWrite(m4,LOW);
+}*/
+
+void resetEngine() {
+  digitalWrite(m1, LOW);
+  digitalWrite(m2, LOW);
+  digitalWrite(m3,LOW);
+  digitalWrite(m4,LOW);
+}
+
+void detectKeyPresses() {
+  /*if (incomingByte == FORWARDS_PRESSED) {
+      forwardsPressed = true;
+    }
+    else if (incomingByte == BACKWARDS_PRESSED) {
+      backwardsPressed = true;
+    }
+
+    if (incomingByte == FORWARDS_RELEASED) {
+      forwardsPressed = false;
+    }
+    else if (incomingByte == BACKWARDS_RELEASED) {
+      backwardsPressed = false;
+    }
+
+    if (incomingByte == RIGHT_PRESSED) {
+      rightPressed = true;
+    }
+    else if (incomingByte == LEFT_PRESSED) {
+      leftPressed = true;
+    }
+
+    if (incomingByte == RIGHT_RELEASED) {
+      rightPressed = false;
+    }
+    else if (incomingByte == LEFT_RELEASED) {
+      leftPressed = false;
+    }*/
+
+    switch(incomingByte)
+    {
+      case FORWARDS_PRESSED : forwardsPressed = true;
+      break;
+
+      case BACKWARDS_PRESSED : backwardsPressed = true;
+      break;
+
+      case FORWARDS_RELEASED : forwardsPressed = false;
+      break;
+
+      case BACKWARDS_RELEASED : backwardsPressed = false;
+      break;
+
+      case RIGHT_PRESSED : rightPressed = true;
+      break;
+
+      case LEFT_PRESSED : leftPressed = true;
+      break;
+
+      case RIGHT_RELEASED : rightPressed = false;
+      break;
+
+      case LEFT_RELEASED : leftPressed = false;
+      break;
+    }
+    
+}
+
+void handlePinOutputs() {
+  if (forwardsPressed == true) {
+    moveForwards();
+  }
+  else if (backwardsPressed == true) {
+    moveBackwards();
+  }
+  else {
+    resetEngine();
+  }
+
+  if (rightPressed == true) {
+    turnRight();
+  }
+  else if (leftPressed == true) {
+    turnLeft();
+  }
+  else {
+    resetEngine();
+  }
+}
+
+void setup() {
+  Serial.begin(BAUD_RATE);
+  delay(10);
+
+  analogWrite(A0,1000);
+
+  initOutputs();
+  connectWifi();
+}
+
+void loop() {
+  int noBytes = Udp.parsePacket();
+  //String received_command = "";
+
+  if ( noBytes ) {
+    Serial.print(millis() / 1000);
+    Serial.print(":Packet of ");
+    Serial.print(noBytes);
+    Serial.print(" received from ");
+    Serial.print(Udp.remoteIP());
+    Serial.print(":");
+    Serial.println(Udp.remotePort());
+
+    Udp.read(packetBuffer,noBytes);
+    Serial.println();
+
+    Serial.println(packetBuffer[0]);
+    incomingByte = packetBuffer[0];
+    Serial.println();
+  }
+  detectKeyPresses();
+  handlePinOutputs();
+}
